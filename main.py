@@ -230,75 +230,50 @@ def main():
     # --- Show empty sidebar on startup ---
     show_empty_sidebar()
 
-    # --- Top menu bar ---
-    menu_bar = tk.Frame(root, bg="#23272e", height=28)
-    menu_bar.pack(side='top', fill='x')
+    # --- VS Code-like Top Bar ---
+    topbar = tk.Frame(root, bg="#23272e", height=28)
+    topbar.pack(side='top', fill='x')
 
-    menu_items = ["File", "Edit", "Selection", "View", "Go", "Run"]
+    # VS Code icon (left)
+    vscode_icon = tk.Label(topbar, text="🟦", bg="#23272e", fg="#22a6f7", font=("Segoe UI Emoji", 14), padx=8)
+    vscode_icon.pack(side="left")
+
+    # File and Run buttons (next to icon)
     menu_btns = {}
-    for item in menu_items:
+    for item in ["File", "Run"]:
         btn = tk.Label(
-            menu_bar, text=item, bg="#23272e", fg="#d4d4d4",
-            font=("Segoe UI", 10), padx=10, pady=2
+            topbar, text=item, bg="#23272e", fg="#d4d4d4",
+            font=("Segoe UI", 10), padx=10, pady=2, cursor="hand2"
         )
         btn.pack(side="left")
         menu_btns[item] = btn
 
-    # --- File menu popup (VS Code-like palette) ---
-    def show_file_palette():
-        popup = tk.Toplevel(root)
-        popup.overrideredirect(True)
-        popup.configure(bg="#23272e")
-        popup.attributes('-topmost', True)
+    # Centered title (like VS Code)
+    title_label = tk.Label(
+        topbar, text="Byte Code Editor", bg="#23272e", fg="#d4d4d4",
+        font=("Segoe UI", 10, "bold")
+    )
+    title_label.pack(side="top", pady=0, expand=True)
 
-        # Get File button position
-        btn = menu_btns["File"]
-        btn.update_idletasks()
-        bx = btn.winfo_rootx()
-        by = btn.winfo_rooty() + btn.winfo_height()
-        w, h = 260, 40 + 4*32
+    # Window control icons (right)
+    def on_close(): root.destroy()
+    def on_minimize(): root.iconify()
+    def on_maximize(): root.state('zoomed')
 
-        popup.geometry(f"{w}x{h}+{bx}+{by}")
-
-        border = tk.Frame(popup, bg="#23272e", bd=0)
-        border.place(relwidth=1, relheight=1, x=4, y=4, width=-8, height=-8)
-
-        options = [
-            ("New File", lambda: (popup.destroy(), sidebar_new_file())),
-            ("New Folder", lambda: (popup.destroy(), sidebar_new_folder())),
-            ("Open File", lambda: (popup.destroy(), open_file())),
-            ("Open Folder", lambda: (popup.destroy(), open_folder())),
-        ]
-
-        for idx, (label, cmd) in enumerate(options):
-            btn = tk.Label(
-                border, text=label, anchor="w",
-                bg="#23272e", fg="#d4d4d4",
-                font=("Segoe UI", 11), padx=16, pady=6
-            )
-            btn.pack(fill="x")
-            btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#264f78", fg="#fff"))
-            btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#23272e", fg="#d4d4d4"))
-            btn.bind("<Button-1>", lambda e, c=cmd: c())
-
-        popup.bind("<FocusOut>", lambda e: popup.destroy())
-        popup.focus_set()
-
-    # Attach File menu
-    menu_btns["File"].bind("<Button-1>", lambda e: show_file_palette())
-
-    # --- File/Folder actions (for palette) ---
-    def open_file():
-        file_path = filedialog.askopenfilename()
-        if file_path:
-            with open(file_path, "r", encoding="utf-8") as f:
-                text_area.delete("1.0", "end")
-                text_area.insert("1.0", f.read())
-
-    def open_folder():
-        folder_path = filedialog.askdirectory()
-        if folder_path:
-            messagebox.showinfo("Open Folder", f"Opened: {folder_path}")
+    controls = tk.Frame(topbar, bg="#23272e")
+    controls.pack(side="right", padx=4)
+    btn_min = tk.Label(controls, text="🗕", bg="#23272e", fg="#d4d4d4", font=("Segoe UI Emoji", 11), padx=6, cursor="hand2")
+    btn_max = tk.Label(controls, text="🗖", bg="#23272e", fg="#d4d4d4", font=("Segoe UI Emoji", 11), padx=6, cursor="hand2")
+    btn_close = tk.Label(controls, text="🗙", bg="#23272e", fg="#d9534f", font=("Segoe UI Emoji", 11), padx=6, cursor="hand2")
+    btn_min.pack(side="left")
+    btn_max.pack(side="left")
+    btn_close.pack(side="left")
+    btn_min.bind("<Button-1>", lambda e: on_minimize())
+    btn_max.bind("<Button-1>", lambda e: on_maximize())
+    btn_close.bind("<Button-1>", lambda e: on_close())
+    for btn in [btn_min, btn_max, btn_close]:
+        btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#333344"))
+        btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#23272e"))
 
     # --- Subtle border below menu bar ---
     tk.Frame(root, bg="#333333", height=1).pack(side='top', fill='x')
@@ -364,9 +339,9 @@ def main():
     # --- Status bar (line/column info) ---
     status_bar = tk.Label(
         bottom_bar, text="Ln 1, Col 0", bg="#23272e", fg="#d4d4d4",
-        font=("Segoe UI", 10), bd=0, relief="flat", anchor="w", padx=10
+        font=("Segoe UI", 10), bd=0, relief="flat", anchor="e", padx=10
     )
-    status_bar.pack(side='left', fill='x', padx=10)
+    status_bar.pack(side='right', padx=10)  # Move to right side
 
     def update_status_bar(event=None):
         try:
